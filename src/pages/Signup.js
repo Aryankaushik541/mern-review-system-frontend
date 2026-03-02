@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api';
 import './Auth.css';
 
 function Signup() {
@@ -39,20 +40,12 @@ function Signup() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: 'user' // Always create as regular user
-        })
+      const data = await api.auth.signup({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'user' // Always create as regular user
       });
-
-      const data = await response.json();
 
       if (data.success) {
         // Store token and user info
@@ -65,8 +58,8 @@ function Signup() {
         setError(data.message || 'Registration failed');
       }
     } catch (err) {
-      setError('Server error. Please try again.');
       console.error('Signup error:', err);
+      setError(err.message || 'Server error. Please try again.');
     } finally {
       setLoading(false);
     }
