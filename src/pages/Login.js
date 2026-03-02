@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../utils/api';
 import './Auth.css';
 
 function Login() {
@@ -24,15 +25,7 @@ function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      const data = await api.auth.login(formData);
 
       if (data.success) {
         // Store token and user info
@@ -49,8 +42,8 @@ function Login() {
         setError(data.message || 'Login failed');
       }
     } catch (err) {
-      setError('Server error. Please try again.');
       console.error('Login error:', err);
+      setError(err.message || 'Server error. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -112,8 +105,7 @@ function Login() {
 
         <div className="auth-footer">
           <p>
-            Don't have an account? 
-            <Link to="/signup"> Sign up here</Link>
+            Don't have an account? <Link to="/signup">Sign up here</Link>
           </p>
         </div>
       </div>
