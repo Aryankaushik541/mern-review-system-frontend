@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../utils/api';
 import './ForgotPassword.css';
 
 function ForgotPassword() {
@@ -7,36 +8,41 @@ function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [resetUrl, setResetUrl] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
     setError('');
+    setResetUrl('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
+      const data = await api.auth.forgotPassword(email);
 
       if (data.success) {
         setMessage(data.message);
+        
+        // If email service is down, show reset URL
+        if (data.resetUrl) {
+          setResetUrl(data.resetUrl);
+        }
+        
         setEmail('');
       } else {
         setError(data.message || 'Failed to send reset email');
       }
     } catch (error) {
       console.error('Forgot password error:', error);
-      setError('Network error. Please try again.');
+      setError(error.message || 'Error sending password reset email. Please try again later.');
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(resetUrl);
+    alert('Reset link copied to clipboard!');
   };
 
   return (
@@ -51,6 +57,28 @@ function ForgotPassword() {
           <div className="success-message">
             <span>✅</span>
             <p>{message}</p>
+          </div>
+        )}
+
+        {resetUrl && (
+          <div className="reset-url-box">
+            <p><strong>📧 Email service is currently unavailable.</strong></p>
+            <p>Use this link to reset your password:</p>
+            <div className="url-container">
+              <input 
+                type="text" 
+                value={resetUrl} 
+                readOnly 
+                className="reset-url-input"
+              />
+              <button onClick={copyToClipboard} className="copy-btn">
+                📋 Copy
+              </button>
+            </div>
+            <p className="url-note">⚠️ This link will expire in 10 minutes</p>
+            <a href={resetUrl} className="reset-link-btn">
+              🔗 Open Reset Page
+            </a>
           </div>
         )}
 
