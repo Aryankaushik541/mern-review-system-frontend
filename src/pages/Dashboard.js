@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../utils/api';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -33,14 +34,9 @@ function Dashboard() {
   }, [navigate]);
 
   const fetchAdminData = async () => {
-    const token = localStorage.getItem('token');
-    
     try {
       // Fetch admin statistics
-      const statsRes = await fetch('http://localhost:5000/api/admin/stats', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const statsData = await statsRes.json();
+      const statsData = await api.admin.getStats();
       if (statsData.success) {
         // Transform nested structure to flat structure for easier access
         const transformedStats = {
@@ -59,19 +55,13 @@ function Dashboard() {
       }
 
       // Fetch all reviews
-      const reviewsRes = await fetch('http://localhost:5000/api/admin/reviews', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const reviewsData = await reviewsRes.json();
+      const reviewsData = await api.admin.getAllReviews();
       if (reviewsData.success) {
         setReviews(reviewsData.data);
       }
 
       // Fetch all users
-      const usersRes = await fetch('http://localhost:5000/api/admin/users', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const usersData = await usersRes.json();
+      const usersData = await api.admin.getUsers();
       if (usersData.success) {
         setUsers(usersData.data);
       }
@@ -90,19 +80,8 @@ function Dashboard() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}/reply`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ text: text.trim() })
-      });
-
-      const data = await response.json();
+      const data = await api.reviews.addReply(reviewId, { text: text.trim() });
 
       if (data.success) {
         setReplyText({ ...replyText, [reviewId]: '' });
@@ -120,22 +99,11 @@ function Dashboard() {
     const editData = editingReview[reviewId];
     if (!editData) return;
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          rating: editData.rating,
-          comment: editData.comment
-        })
+      const data = await api.reviews.update(reviewId, {
+        rating: editData.rating,
+        comment: editData.comment
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setEditingReview({});
@@ -156,19 +124,8 @@ function Dashboard() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}/reply/${replyId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ text: text.trim() })
-      });
-
-      const data = await response.json();
+      const data = await api.reviews.updateReply(reviewId, replyId, { text: text.trim() });
 
       if (data.success) {
         setEditingReply({});
@@ -187,15 +144,8 @@ function Dashboard() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      const data = await response.json();
+      const data = await api.reviews.delete(reviewId);
 
       if (data.success) {
         alert('Review deleted successfully!');
@@ -212,15 +162,8 @@ function Dashboard() {
   const handleDeleteReply = async (reviewId, replyId) => {
     if (!window.confirm('Delete this reply?')) return;
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/reviews/${reviewId}/reply/${replyId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      const data = await response.json();
+      const data = await api.reviews.deleteReply(reviewId, replyId);
 
       if (data.success) {
         fetchAdminData();
@@ -240,19 +183,8 @@ function Dashboard() {
       return;
     }
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ role: newRole })
-      });
-
-      const data = await response.json();
+      const data = await api.admin.updateUser(userId, { role: newRole });
 
       if (data.success) {
         alert(`User role changed to ${newRole} successfully!`);
@@ -269,15 +201,8 @@ function Dashboard() {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm('Delete this user and all their reviews?')) return;
 
-    const token = localStorage.getItem('token');
-
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      const data = await response.json();
+      const data = await api.admin.deleteUser(userId);
 
       if (data.success) {
         alert('User deleted successfully!');
